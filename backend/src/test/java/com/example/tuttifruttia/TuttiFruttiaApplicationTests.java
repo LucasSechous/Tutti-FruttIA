@@ -1,4 +1,4 @@
-package com.example.tutti_fruttia;
+package com.example.tuttifruttia;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

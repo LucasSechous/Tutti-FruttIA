@@ -1,4 +1,4 @@
-package com.example.tutti_fruttia.controller;
+package com.example.tuttifruttia.controller;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
