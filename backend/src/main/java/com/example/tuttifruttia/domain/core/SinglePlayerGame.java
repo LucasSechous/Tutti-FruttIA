@@ -80,7 +80,7 @@ public class SinglePlayerGame {
         this.settings = Objects.requireNonNull(newSettings, "settings is required");
         this.settings.validate();
 
-        this.state = GameState.ONGOING; // asegurate que en tu enum exista RUNNING
+        this.state = GameState.ONGOING;
         this.currentRound = null;
         // No creamos la ronda todavía; eso lo hará generateLetter().
         saveGame();

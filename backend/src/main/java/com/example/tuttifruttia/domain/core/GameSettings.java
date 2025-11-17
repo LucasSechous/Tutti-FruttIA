@@ -38,10 +38,16 @@ public class GameSettings {
     }
 
     public List<Category> getCategories() {
+
+
         return categories;
     }
 
     public int getRoundSeconds() {
+
+
+
+
         return roundSeconds;
     }
 

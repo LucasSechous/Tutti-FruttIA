@@ -6,6 +6,7 @@ public class PointsRule {
     private final int pointsInvalid;
     private final int pointsEmpty;
 
+
     public PointsRule(int pointsValid, int pointsInvalid, int pointsEmpty) {
         this.pointsValid = pointsValid;
         this.pointsInvalid = pointsInvalid;

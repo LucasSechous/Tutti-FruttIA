@@ -4,7 +4,7 @@ public class ScoreEntry {
 
     private final Category category;
     private final int points;
-    private final EntryStatus status; // ej: "VALID", "INVALID", "EMPTY"
+    private final EntryStatus status;
 
     public ScoreEntry(Category category, int points, EntryStatus status) {
         this.category = category;
