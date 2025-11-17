@@ -1,0 +1,50 @@
+export type Letter = string; // A, B, C...
+
+export interface Category{
+    id: number;
+    name : string;// paises, frutas...
+}
+
+export interface RoundAnswer{
+    categoryId: number;
+    categoryName: string;
+    answer: string;
+    isValid: boolean;
+    score?: number;
+}
+
+export interface RoundResult{
+
+    roundNumber: number;
+    letter: Letter;
+    answers: RoundAnswer[];
+    totalScore: number;
+}
+
+export interface StartGameRequest {
+  playerName: string;
+  categoriesIds?: number[]; // opcional si el jugador elige categorías específicas
+}
+
+export interface StartGameResponse{
+    gameId: string;
+    firstLetter: Letter;
+    categories: Category[];
+}
+
+
+export interface SubmitRoundRequest {
+  gameId: string;
+  roundNumber: number;
+  letter: Letter;
+  answers: {
+    categoryId: number;
+    answer: string;
+  }[];
+}
+
+export interface GameSummary {
+  gameId: string;
+  totalScore: number;
+  rounds: RoundResult[];
+}
