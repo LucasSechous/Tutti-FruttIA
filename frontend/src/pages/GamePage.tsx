@@ -2,11 +2,6 @@ import { useEffect, useState } from "react";
 import "../styles/game.css"; // mismo CSS que ya usabas para botones, inputs, etc.
 import { Link } from "react-router-dom";
 
-const LETTERS = [
-  "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
-  "N", "O", "P", "R", "S", "T", "U", "V", "W", "Y", "Z",
-];
-
 const CATEGORIES = [
   { key: "name", label: "Name" },
   { key: "animal", label: "Animal" },
@@ -30,10 +25,6 @@ const INITIAL_VALIDATION: Record<CategoryKey, ValidationState> = {
   country: null,
   object: null,
 };
-
-function getRandomLetter() {
-  return LETTERS[Math.floor(Math.random() * LETTERS.length)];
-}
 
 function GamePage() {
   const [currentLetter, setCurrentLetter] = useState<string>("?");
@@ -80,16 +71,42 @@ function GamePage() {
     setShowAiMessage(true);
   };
 
-  const startGame = () => {
+  // 🔹 NUEVO: función que pide la letra a tu API
+  const fetchLetterFromApi = async (): Promise<string | null> => {
+    try {
+      const resp = await fetch("http://localhost:8080/api");
+      const data = await resp.text(); // si tu API devuelve JSON, usar resp.json()
+      const letter = data.trim().toUpperCase();
+      setCurrentLetter(letter);
+      console.log("Letra desde API:", letter);
+      return letter;
+    } catch (error) {
+      console.error("Error al consumir la API:", error);
+      setAiMessage("There was an error getting the letter from the server.");
+      setShowAiMessage(true);
+      return null;
+    }
+  };
+
+  // 🔹 MODIFICADO: ahora usa la API en lugar de getRandomLetter()
+  const startGame = async () => {
     if (isRunning) return;
 
-    const letter = getRandomLetter();
-    setCurrentLetter(letter);
+    // reseteo estado de la ronda
     setAnswers(INITIAL_ANSWERS);
     setValidation(INITIAL_VALIDATION);
     setTimer(60);
     setIsRunning(true);
     setShowAiMessage(true);
+    setAiMessage("Getting a letter from the server...");
+
+    const letter = await fetchLetterFromApi();
+    if (!letter) {
+      // si falló la API, frenamos el juego
+      setIsRunning(false);
+      return;
+    }
+
     setAiMessage(`Quick! Find words starting with ${letter}!`);
   };
 
@@ -167,10 +184,10 @@ function GamePage() {
       <div className="container mx-auto px-4 py-8">
         {/* Botón Home (de momento hace un link a la raíz) */}
         <Link
-        to="/"
-        className="absolute top-4 left-4 bg-white p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors"
+          to="/"
+          className="absolute top-4 left-4 bg-white p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors"
         >
-        <span className="text-primary-600 font-bold">⟵</span>
+          <span className="text-primary-600 font-bold">⟵</span>
         </Link>
 
         {/* Game Area */}
