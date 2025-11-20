@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import "../styles/game.css"; // mismo CSS que ya usabas para botones, inputs, etc.
+import "../styles/game.css"; // mismo CSS que ya se usaba para botones, inputs, etc.
 import { Link } from "react-router-dom";
 
 const CATEGORIES = [
@@ -204,6 +204,27 @@ function GamePage() {
               <span className="text-primary-600">FruttIA</span>
             </h1>
           </div>
+          {/* Timer & Score */}
+            <div className="bg-primary-100 px-6 py-4 flex justify-between items-center">
+              <div className="inline-block bg-white rounded-full px-4 py-1">
+                <span className="text-primary-800 font-bold">Score:</span>
+                <span className="text-primary-600 font-bold text-xl ml-1">
+                  {score}
+                </span>
+              </div>
+              <div className="text-primary-800 font-medium flex items-center gap-2">
+                <span>⏱</span>
+                <span>Time left:</span>
+                <div
+                  className={
+                    "text-2xl font-bold " +
+                    (timer <= 10 ? "text-red-500 animate-pulse" : "text-primary-600")
+                  }
+                >
+                  {timer}
+                </div>
+              </div>
+            </div>
 
           {/* Game Controls */}
           <div className="p-6">
@@ -222,14 +243,6 @@ function GamePage() {
                 className="btn-secondary"
               >
                 <span className="mr-2">■</span> Stop
-              </button>
-
-              <button
-                onClick={submitAnswers}
-                disabled={!isRunning}
-                className="btn-secondary"
-              >
-                <span className="mr-2">✔</span> Submit
               </button>
 
               <button
@@ -274,27 +287,20 @@ function GamePage() {
               </div>
             </div>
 
-            {/* Timer & Score */}
-            <div className="bg-primary-100 px-6 py-4 flex justify-between items-center">
-              <div className="inline-block bg-white rounded-full px-4 py-1">
-                <span className="text-primary-800 font-bold">Score:</span>
-                <span className="text-primary-600 font-bold text-xl ml-1">
-                  {score}
-                </span>
-              </div>
-              <div className="text-primary-800 font-medium flex items-center gap-2">
-                <span>⏱</span>
-                <span>Time left:</span>
-                <div
-                  className={
-                    "text-2xl font-bold " +
-                    (timer <= 10 ? "text-red-500 animate-pulse" : "text-primary-600")
-                  }
-                >
-                  {timer}
-                </div>
-              </div>
+        {/* Game Controls */}
+          <div className="p-6">
+            <div className="flex flex-wrap gap-3 justify-center mb-3">
+
+              <button
+                onClick={submitAnswers}
+                disabled={!isRunning}
+                className="btn-secondary"
+              >
+                <span className="mr-2">✔</span> Submit
+              </button>
             </div>
+          </div>
+
 
             {/* AI Message */}
             {showAiMessage && (
@@ -315,6 +321,6 @@ function GamePage() {
       </div>
     </div>
   );
+  
 }
-
 export default GamePage;
