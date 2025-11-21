@@ -1,4 +1,4 @@
-package com.example.tutti_fruttia;
+package com.example.tuttifruttia;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -7,6 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class TuttiFruttiaApplication {
 
 	public static void main(String[] args) {
+
 		SpringApplication.run(TuttiFruttiaApplication.class, args);
 	}
 
