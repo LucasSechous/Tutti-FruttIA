@@ -31,7 +31,7 @@ public class HybridJudge implements AIJudge{
             return basic;
         }
 
-        // 2) Si pasó las reglas básicas, lo chequeamos con LLM
+        // 2) Si pasó las reglas básicas, lo chequeamos con provedor de IA
         ValidationResult semanticResult = semanticJudge.validate(letter, category, text);
 
         // 3) Merge de resultados (razones combinadas, status final)

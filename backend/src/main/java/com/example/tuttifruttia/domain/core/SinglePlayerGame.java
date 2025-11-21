@@ -1,6 +1,7 @@
 package com.example.tuttifruttia.domain.core;
 
 import com.example.tuttifruttia.domain.ai.AIJudge;
+import com.example.tuttifruttia.domain.ai.HybridJudge;
 import com.example.tuttifruttia.domain.letter.LetterStrategy;
 import com.example.tuttifruttia.domain.persistence.PersistenceFactory;
 import com.example.tuttifruttia.domain.persistence.ValidationLogRepository;
@@ -22,13 +23,13 @@ public class SinglePlayerGame {
     private final ScoreBoard scoreBoard;
 
     // --- Estrategias / dependencias (DIP) ---
-    private final AIJudge judge;
+    private final HybridJudge judge;
     private final LetterStrategy letterStrat;
     private final ScoreCalculator scorer;
     private final PersistenceFactory persistence;
 
     public SinglePlayerGame(GameSettings settings,
-                            AIJudge judge,
+                            HybridJudge judge,
                             LetterStrategy letterStrat,
                             ScoreCalculator scorer,
                             PersistenceFactory persistence) {
