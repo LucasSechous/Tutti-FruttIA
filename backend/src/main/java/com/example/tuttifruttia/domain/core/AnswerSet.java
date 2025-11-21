@@ -6,35 +6,36 @@ import java.util.Map;
 
 public class AnswerSet {
 
-    private final Map<Category, Answer> byCategory = new HashMap<>();
+    // Ahora el mapa es coherente en todos lados: Category -> PlayerAnswer
+    private final Map<Category, PlayerAnswer> byCategory = new HashMap<>();
 
-    // --- PUT con solo texto (placeholder inicial) ---
+    // --- PUT con solo texto (cómodo para usar desde el servicio) ---
     public void put(Category category, String text) {
         if (category == null) {
             throw new IllegalArgumentException("Category is required");
         }
-        Answer answer = new Answer(text, false, null); // la validación vendrá después
-        byCategory.put(category, answer);
+        PlayerAnswer pAnswer = new PlayerAnswer(category, text);
+        byCategory.put(category, pAnswer);
     }
 
-    // --- PUT con Answer completo (para AIJudge / validate) ---
-    public void put(Category category, Answer answer) {
+    // --- PUT con PlayerAnswer ya construido ---
+    public void put(Category category, PlayerAnswer answer) {
         if (category == null) {
             throw new IllegalArgumentException("Category is required");
         }
         if (answer == null) {
-            throw new IllegalArgumentException("Answer is required");
+            throw new IllegalArgumentException("PlayerAnswer is required");
         }
         byCategory.put(category, answer);
     }
 
     // --- Obtener una respuesta por categoría ---
-    public Answer get(Category category) {
+    public PlayerAnswer get(Category category) {
         return byCategory.get(category);
     }
 
     // --- Obtener todas las respuestas ---
-    public Map<Category, Answer> getByCategory() {
+    public Map<Category, PlayerAnswer> getByCategory() {
         return Collections.unmodifiableMap(byCategory);
     }
 

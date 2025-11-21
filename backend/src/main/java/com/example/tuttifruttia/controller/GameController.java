@@ -3,11 +3,12 @@ package com.example.tuttifruttia.controller;
 import com.example.tuttifruttia.controller.dto.*;
 import com.example.tuttifruttia.service.GameAppService;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 import java.util.List;
 
 @RestController
-@RequestMapping
+@RequestMapping("/api/game")
 @CrossOrigin(origins = "http://localhost:5173") // ajusta al puerto de tu front
 public class GameController {
 

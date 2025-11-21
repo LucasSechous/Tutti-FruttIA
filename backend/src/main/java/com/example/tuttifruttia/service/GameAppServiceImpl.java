@@ -2,8 +2,10 @@ package com.example.tuttifruttia.service;
 
 import com.example.tuttifruttia.controller.dto.*;
 import com.example.tuttifruttia.domain.ai.AIJudge;
+import com.example.tuttifruttia.domain.ai.HybridJudge;
 import com.example.tuttifruttia.domain.core.*;
-import com.example.tuttifruttia.domain.letter.LetterStrategy;
+import com.example.tuttifruttia.domain.letter.*;
+import com.example.tuttifruttia.domain.scoring.*;
 import com.example.tuttifruttia.domain.persistence.PersistenceFactory;
 import com.example.tuttifruttia.domain.scoring.ScoreCalculator;
 import org.springframework.stereotype.Service;
@@ -14,25 +16,29 @@ import java.util.stream.Collectors;
 @Service
 public class GameAppServiceImpl implements GameAppService {
 
-    // Dependencias de dominio
     private final AIJudge judge;
     private final LetterStrategy letterStrategy;
     private final ScoreCalculator scorer;
     private final PersistenceFactory persistenceFactory;
+    private final PointsRule pointsRule;
+    private final Alphabet alphabet;
 
-    // "Base de datos" en memoria de partidas
     private final Map<UUID, SinglePlayerGame> games = new HashMap<>();
 
     public GameAppServiceImpl(
             AIJudge judge,
             LetterStrategy letterStrategy,
             ScoreCalculator scorer,
-            PersistenceFactory persistenceFactory
+            PersistenceFactory persistenceFactory,
+            PointsRule pointsRule,
+            Alphabet alphabet
     ) {
         this.judge = judge;
         this.letterStrategy = letterStrategy;
         this.scorer = scorer;
         this.persistenceFactory = persistenceFactory;
+        this.pointsRule = pointsRule;
+        this.alphabet = alphabet;
     }
 
     // ========================================================
@@ -43,10 +49,10 @@ public class GameAppServiceImpl implements GameAppService {
     public List<CategoryDto> getAvailableCategories() {
         // TODO: más adelante esto debería venir de dominio/persistencia
         return List.of(
-                new CategoryDto(1L, "Frutas", "Nombres de frutas"),
-                new CategoryDto(2L, "Países", "Nombres de países"),
-                new CategoryDto(3L, "Animales", "Nombres de animales"),
-                new CategoryDto(4L, "Colores", "Nombres de colores")
+                new CategoryDto(1L, "Frutas", true),
+                new CategoryDto(2L, "Países",true),
+                new CategoryDto(3L, "Animales",true),
+                new CategoryDto(4L, "Colores",true)
         );
     }
 
@@ -57,14 +63,13 @@ public class GameAppServiceImpl implements GameAppService {
     @Override
     public StartGameResponseDto startGame(StartGameRequestDto request) {
 
-        // 1) Crear GameSettings desde el request
         GameSettings settings = new GameSettings(
                 getCategoriesFromDto(request.getCategoryIds()),
                 request.getRoundTimeSeconds(),
-                Alphabet.LATIN
+                pointsRule,   // 👈 aquí va PointsRule
+                alphabet      // 👈 aquí va Alphabet (instancia, no el tipo)
         );
 
-        // 2) Crear la partida con dependencias de dominio
         SinglePlayerGame game = new SinglePlayerGame(
                 settings,
                 judge,
@@ -73,24 +78,22 @@ public class GameAppServiceImpl implements GameAppService {
                 persistenceFactory
         );
 
-        // 3) Arrancar la partida
         game.start(settings);
 
-        // 4) Guardar en memoria
         games.put(game.getId(), game);
 
-        // 5) Generar primera letra
         Letter firstLetter = game.generateLetter();
 
-        // 6) Armar respuesta DTO
         StartGameResponseDto response = new StartGameResponseDto();
         response.setGameId(game.getId().toString());
-        response.setFirstLetter(firstLetter.getValue());
-        response.setCategories(
-                settings.getCategories().stream()
-                        .map(c -> new CategoryDto(c.getId(), c.getName(), c.getDescription()))
-                        .toList()
-        );
+        response.setFirstLetter(String.valueOf(firstLetter.getValue())); // char -> String
+
+        // Usamos las categorías del request para el DTO
+        List<CategoryDto> selectedCategories = getAvailableCategories().stream()
+                .filter(c -> request.getCategoryIds().contains(c.getId()))
+                .toList();
+
+        response.setCategories(selectedCategories);
 
         return response;
     }
@@ -101,56 +104,59 @@ public class GameAppServiceImpl implements GameAppService {
 
     @Override
     public RoundResultDto processRound(SubmitRoundRequestDto request) {
-
-        // 1) Recuperar juego en memoria
+        // 1) Recuperar juego
         UUID gameId = UUID.fromString(request.getGameId());
         SinglePlayerGame game = games.get(gameId);
         if (game == null) {
             throw new IllegalArgumentException("Game not found: " + request.getGameId());
         }
 
-        // 2) Construir AnswerSet del dominio a partir del DTO
+        // 2) Construir AnswerSet
         AnswerSet answerSet = new AnswerSet();
 
-        for (SubmitRoundRequestDto.AnswerDto dto : request.getAnswers()) {
+        List<Category> categories = game.getSettings().getCategories();
+        List<SubmitRoundRequestDto.AnswerDto> answersDto = request.getAnswers();
 
-            Category category = game.getSettings().getCategories().stream()
-                    .filter(c -> Objects.equals(c.getId(), dto.getCategoryId()))
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalArgumentException("Invalid category id: " + dto.getCategoryId()));
+        for (int i = 0; i < answersDto.size(); i++) {
+            SubmitRoundRequestDto.AnswerDto dto = answersDto.get(i);
+            Category category = categories.get(i);
 
-            Answer answer = new Answer(category, dto.getValue());
-            answerSet.put(category, answer);
+            // 👇 AHORA SÍ: PlayerAnswer (NO Answer)
+            PlayerAnswer pAnswer = new PlayerAnswer(category, dto.getValue());
+            answerSet.put(category, pAnswer);
         }
 
-        // 3) Ejecutar lógica de dominio (esto llama internamente al AIJudge)
+        // 3) Lógica de dominio
         game.submitAnswers(answerSet);
 
-        // 4) Recuperar la ronda actual y sus validaciones
+        // 4) Datos de la ronda
         Round round = game.getCurrentRound();
         Map<Category, ValidationResult> validations = round.getValidationResults();
         AnswerSet storedAnswers = round.getAnswers();
 
-        // 5) Construir DTO de resultado para el front
+        // 5) DTO
         RoundResultDto resultDto = new RoundResultDto();
         resultDto.setGameId(request.getGameId());
-        resultDto.setLetter(round.getLetter().getValue());
+        resultDto.setLetter(String.valueOf(round.getLetter().getValue()));
 
         List<RoundResultDto.AnswerResultDto> answerResults = new ArrayList<>();
 
-        for (Category category : game.getSettings().getCategories()) {
+        for (int i = 0; i < categories.size(); i++) {
+            Category category = categories.get(i);
+            SubmitRoundRequestDto.AnswerDto dto = answersDto.get(i);
+
             ValidationResult vr = validations.get(category);
 
-            RoundResultDto.AnswerResultDto ar = new RoundResultDto.AnswerResultDto();
-            ar.setCategoryId(category.getId());
+            // 👇 Ahora recuperamos PlayerAnswer
+            PlayerAnswer pAnswer = storedAnswers.get(category);
 
-            Answer answer = storedAnswers.get(category);
-            ar.setValue(answer != null ? answer.getText() : null);
+            RoundResultDto.AnswerResultDto ar = new RoundResultDto.AnswerResultDto();
+            ar.setCategoryId(dto.getCategoryId());
+            ar.setValue(pAnswer != null ? pAnswer.getText() : null);
 
             if (vr != null) {
                 ar.setValid(vr.isOk());
                 ar.setReason(String.join("; ", vr.getReasons()));
-                // Puntaje simple: 10 si es OK, 0 si no
                 ar.setScore(vr.isOk() ? 10 : 0);
             } else {
                 ar.setValid(false);
@@ -162,9 +168,10 @@ public class GameAppServiceImpl implements GameAppService {
         }
 
         resultDto.setResults(answerResults);
-
         return resultDto;
     }
+
+
 
     // ========================================================
     // GET /game/{id}/summary
@@ -194,15 +201,28 @@ public class GameAppServiceImpl implements GameAppService {
     // ========================================================
 
     private List<Category> getCategoriesFromDto(List<Long> ids) {
-        Map<Long, Category> map = getAvailableCategories().stream()
+        // Mapeamos los DTO que ya conocemos (los 4 fijos del getAvailableCategories)
+        Map<Long, CategoryDto> dtoById = getAvailableCategories().stream()
                 .collect(Collectors.toMap(
                         CategoryDto::getId,
-                        c -> new Category(c.getId(), c.getName(), c.getDescription())
+                        c -> c
                 ));
 
-        return ids.stream()
-                .map(map::get)
-                .filter(Objects::nonNull)
-                .toList();
+        List<Category> result = new ArrayList<>();
+
+        for (Long id : ids) {
+            CategoryDto dto = dtoById.get(id);
+            if (dto != null) {
+                // En el dominio usamos un UUID interno y las marcamos como activas
+                Category category = new Category(
+                        UUID.randomUUID(),
+                        dto.getName(),
+                        true
+                );
+                result.add(category);
+            }
+        }
+
+        return result;
     }
 }

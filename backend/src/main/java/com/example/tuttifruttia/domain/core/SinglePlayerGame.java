@@ -23,13 +23,13 @@ public class SinglePlayerGame {
     private final ScoreBoard scoreBoard;
 
     // --- Estrategias / dependencias (DIP) ---
-    private final HybridJudge judge;
+    private final AIJudge judge;
     private final LetterStrategy letterStrat;
     private final ScoreCalculator scorer;
     private final PersistenceFactory persistence;
 
     public SinglePlayerGame(GameSettings settings,
-                            HybridJudge judge,
+                            AIJudge judge,
                             LetterStrategy letterStrat,
                             ScoreCalculator scorer,
                             PersistenceFactory persistence) {
@@ -124,7 +124,7 @@ public class SinglePlayerGame {
         // 2) Validamos cada respuesta con el AIJudge
         Map<Category, ValidationResult> results = new HashMap<>();
         for (Category category : settings.getCategories()) {
-            Answer answer = answers.get(category); // puede ser null si no respondió
+            PlayerAnswer answer = answers.get(category); // puede ser null si no respondió
             String text = answer != null ? answer.getText() : null;
 
             ValidationResult vr = judge.validate(
