@@ -44,8 +44,7 @@ public class RuleBasedJudge implements AIJudge{
             );
         }
 
-        // 4) Si pasa todas las reglas "hard", es válida.
-        // Podés dejar sin reasons o agregar notas, como "PASS_RULE_BASED".
+        // 4) Si pasa todas las reglas es válida(For now...).
         return ValidationResult.valid();
     }
 }
