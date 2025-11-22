@@ -23,7 +23,8 @@ export interface RoundResult{
 
 export interface StartGameRequest {
   playerName: string;
-  categoriesIds?: number[]; // opcional si el jugador elige categorías específicas
+  categoryIds: number[];        // 👈 nombre correcto
+  roundTimeSeconds?: number;    // opcional, por si querés mandar tiempo
 }
 
 export interface StartGameResponse{
