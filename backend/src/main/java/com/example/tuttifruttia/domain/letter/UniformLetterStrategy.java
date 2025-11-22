@@ -13,7 +13,7 @@ public class UniformLetterStrategy implements LetterStrategy {
     public Letter nextLetter(Alphabet alphabet){
 
         // 1. Obtener el set de letras
-        Set<Character> letrasSet = alphabet.getLetters();
+        List<Character> letrasSet = alphabet.getLetters();
 
         // 2. Convertir a lista (porque el Set no tiene índices)
         List<Character> letrasList = new ArrayList<>(letrasSet);
