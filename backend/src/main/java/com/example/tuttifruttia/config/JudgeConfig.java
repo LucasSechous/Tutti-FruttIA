@@ -16,7 +16,7 @@ public class JudgeConfig {
     // application.properties -> groq.api.key=.....
     //
     // El ": " (dos puntos) significa "si no está definida, usar cadena vacía"
-    @Value("${groq.api.key:}")
+    @Value("${groq.api-key}")
     private String groqApiKey;
 
     @Bean
