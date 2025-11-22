@@ -15,7 +15,7 @@ public class UniformLetterStrategy implements LetterStrategy {
         // 1. Obtener el set de letras
         List<Character> letrasSet = alphabet.getLetters();
 
-        // 2. Convertir a lista (porque el Set no tiene índices)
+        // 2. Convertir a lista (porque el Set no tiene índices.)
         List<Character> letrasList = new ArrayList<>(letrasSet);
 
         // 3. Elegir un índice al azar

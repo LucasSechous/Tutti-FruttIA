@@ -9,7 +9,7 @@ public class Alphabet {
 
     public Alphabet(List<Character> letters) {
         if (letters == null || letters.isEmpty()) {
-            throw new IllegalArgumentException("El Alfabeto no puede estar vacío");
+            throw new IllegalArgumentException("El Alfabeto de letras no puede estar vacío");
         }
         this.letters = List.copyOf(letters);
     }
