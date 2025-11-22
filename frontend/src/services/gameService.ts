@@ -11,7 +11,7 @@ import type{
 export const gameService = {
     // aca obtenemos las categorias disponibles
     async getCategories(): Promise<Category[]> {
-        const response = await api.get<Category[]>("/categories");
+        const response = await api.get<Category[]>("/game/categories");
         return response.data;
     },
 
