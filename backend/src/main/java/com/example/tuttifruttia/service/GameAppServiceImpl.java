@@ -197,10 +197,15 @@ public class GameAppServiceImpl implements GameAppService {
     }
 
     // ========================================================
-    // Helpers
-    // ========================================================
+// Helpers
+// ========================================================
 
     private List<Category> getCategoriesFromDto(List<Long> ids) {
+        // 🔒 Protección por si el front manda null o no manda el campo
+        if (ids == null || ids.isEmpty()) {
+            return List.of(); // lista vacía, sin romper
+        }
+
         // Mapeamos los DTO que ya conocemos (los 4 fijos del getAvailableCategories)
         Map<Long, CategoryDto> dtoById = getAvailableCategories().stream()
                 .collect(Collectors.toMap(
@@ -225,4 +230,5 @@ public class GameAppServiceImpl implements GameAppService {
 
         return result;
     }
+
 }

@@ -37,17 +37,23 @@ public class Groq implements LLMProvider{
      */
     public static Groq fromEnv() {
 
+        // Primero intentamos variable del sistema
         String key = System.getenv("GROQ_API_KEY");
 
-        System.out.println("DEBUG >>> GROQ_API_KEY = " + key);
-
-       if (key == null || key.isBlank()) {
-           throw new IllegalStateException(
-                    "La variable de entorno GROQ_API_KEY no está definida."
-           );
+        // Si no existe, intentamos propiedad de Spring
+        if (key == null || key.isBlank()) {
+            key = System.getProperty("GROQ_API_KEY");
         }
-       return new Groq(key);
+
+        if (key == null || key.isBlank()) {
+            throw new IllegalStateException(
+                    "No se encontró GROQ_API_KEY (ni variable de entorno ni propiedad)"
+            );
+        }
+
+        return new Groq(key);
     }
+
 
     @Override
     public String complete(String systemPrompt, String userPrompt) {

@@ -1,12 +1,14 @@
 package com.example.tuttifruttia.domain.letter;
 
 import com.example.tuttifruttia.domain.core.Letter;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
+@Component
 public class UniformLetterStrategy implements LetterStrategy {
 
     @Override

@@ -9,7 +9,7 @@ public class ValidationResult {
     private final EntryStatus status;
     private final List<String> reasons;
 
-    private ValidationResult(boolean ok,EntryStatus status, List<String> reasons) {
+    public ValidationResult(boolean ok,EntryStatus status, List<String> reasons) {
         this.ok = ok;
         this.status = status;
         this.reasons = reasons == null ? List.of() : List.copyOf(reasons);
