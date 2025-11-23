@@ -1,47 +1,67 @@
-export type Letter = string; // A, B, C...
+// src/types/game.ts
 
-export interface Category{
-    id: number;
-    name : string;// paises, frutas...
+export type Letter = string; // "A", "B", "C", ...
+
+// Categoría que devuelve el backend en /api/game/start
+export interface Category {
+  id: number;
+  name: string;      // "Frutas", "Países", etc.
+  activado: boolean; // tal como viene en la API
 }
 
-export interface RoundAnswer{
-    categoryId: number;
-    categoryName: string;
-    answer: string;
-    isValid: boolean;
-    score?: number;
-}
-
-export interface RoundResult{
-
-    roundNumber: number;
-    letter: Letter;
-    answers: RoundAnswer[];
-    totalScore: number;
-}
+/* ============ /api/game/start ============ */
 
 export interface StartGameRequest {
   playerName: string;
-  categoryIds: number[];        // 👈 nombre correcto
-  roundTimeSeconds?: number;    // opcional, por si querés mandar tiempo
+  categoryIds: number[];
+  roundTimeSeconds?: number; // opcional
 }
 
-export interface StartGameResponse{
-    gameId: string;
-    firstLetter: Letter;
-    categories: Category[];
+export interface StartGameResponse {
+  gameId: string;
+  firstLetter: Letter;
+  categories: Category[];
+  roundTimeSeconds?: number;
 }
 
+/* ============ /api/game/round ============ */
 
 export interface SubmitRoundRequest {
   gameId: string;
-  roundNumber: number;
   letter: Letter;
   answers: {
     categoryId: number;
-    answer: string;
+    value: string;   // 👈 importante: el backend espera "value"
   }[];
+}
+
+export interface SubmitRoundResponse {
+  gameId: string;
+  letter: Letter;
+  results: {
+    categoryId: number;
+    value: string;
+    valid: boolean;
+    score: number;
+    reason: string;
+  }[];
+}
+
+/* ============ Modelos "lógicos" del juego (para otras pantallas, resúmenes, etc.) ============ */
+
+export interface RoundAnswer {
+  categoryId: number;
+  categoryName: string;
+  answer: string;
+  isValid: boolean;
+  score?: number;
+}
+
+export interface RoundResult {
+  roundNumber: number;
+  letter: Letter;
+  answers: RoundAnswer[];
+  totalScore: number;
 }
 
 export interface GameSummary {
