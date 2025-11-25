@@ -23,13 +23,13 @@ public class SinglePlayerGame {
     private final ScoreBoard scoreBoard;
 
     // --- Estrategias / dependencias (DIP) ---
-    private final HybridJudge judge;
+    private final AIJudge judge;
     private final LetterStrategy letterStrat;
     private final ScoreCalculator scorer;
     private final PersistenceFactory persistence;
 
     public SinglePlayerGame(GameSettings settings,
-                            HybridJudge judge,
+                            AIJudge judge,
                             LetterStrategy letterStrat,
                             ScoreCalculator scorer,
                             PersistenceFactory persistence) {
@@ -48,7 +48,7 @@ public class SinglePlayerGame {
         this.currentRound = null;
     }
 
-    // --- Getters básicos (por si los necesitamos más adelante) ---
+    // --- Getters básicos ---
 
     public UUID getId() {
         return id;
@@ -119,16 +119,12 @@ public class SinglePlayerGame {
         }
 
         // 1) Asociamos las respuestas a la ronda actual
-        //    (si quisieras ser más estricto, podrías clonar el AnswerSet)
-        //    acá vamos a usar directamente el AnswerSet recibido.
-        //    Para eso necesitamos un pequeño helper en Round:
-        //    public void setAnswers(AnswerSet answers) { this.answers = answers; }
         currentRound.setAnswers(answers);
 
         // 2) Validamos cada respuesta con el AIJudge
         Map<Category, ValidationResult> results = new HashMap<>();
         for (Category category : settings.getCategories()) {
-            Answer answer = answers.get(category); // puede ser null si no respondió
+            PlayerAnswer answer = answers.get(category); // puede ser null si no respondió
             String text = answer != null ? answer.getText() : null;
 
             ValidationResult vr = judge.validate(
@@ -139,9 +135,12 @@ public class SinglePlayerGame {
             results.put(category, vr);
         }
 
-        // 3) Log de validación (no nos importa la implementación concreta todavía)
+        // 3) Log de validación
         ValidationLogRepository logRepo = persistence.logRepo();
         logRepo.save(currentRound.getId(), results);
+
+        // --- NUEVO: guardamos los resultados en la ronda ---
+        currentRound.setValidationResults(results);
 
         // 4) Calculamos el puntaje de la ronda
         PointsRule rule = settings.getPointsRule();
@@ -223,12 +222,4 @@ public class SinglePlayerGame {
     private void saveGame() {
         persistence.gameRepo().save(this);
     }
-
-
-
-
-
-
-
-
 }
