@@ -7,11 +7,11 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "single_player_game")
+@Table(name = "singlePlayerGames")
 public class SinglePlayerGameEntity {
 
     @Id
-    @Column(name = "id", nullable = false, updatable = false)
+    @Column(name = "game_id", nullable = false, updatable = false)
     private UUID id; // ID lo controla el dominio
 
     @Column(name = "state", nullable = false, length = 30)
@@ -21,7 +21,7 @@ public class SinglePlayerGameEntity {
     @JoinColumn(name = "settings_id", nullable = false)
     private GameSettingsEntity settings;
 
-    @OneToMany(mappedBy = "game", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "rounds", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RoundEntity> rounds = new ArrayList<>();
 
     @Column(name = "started_at", nullable = false)
@@ -30,7 +30,7 @@ public class SinglePlayerGameEntity {
     @Column(name = "ended_at")
     private OffsetDateTime endedAt;
 
-    @OneToOne(mappedBy = "game", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(mappedBy = "scoreboard", cascade = CascadeType.ALL, orphanRemoval = true)
     private ScoreBoardEntity scoreboard;
 
     // =========================

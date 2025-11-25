@@ -7,12 +7,12 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "answer_validation_log")
+@Table(name = "answerValidationLog")
 public class AnswerValidationLogEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "id", nullable = false, updatable = false)
+    @Column(name = "log_id", nullable = false, updatable = false)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)

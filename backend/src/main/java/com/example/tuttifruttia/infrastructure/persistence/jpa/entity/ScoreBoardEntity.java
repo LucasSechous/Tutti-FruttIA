@@ -6,12 +6,12 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "scoreboard")
+@Table(name = "Scoreboards")
 public class ScoreBoardEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "id", nullable = false, updatable = false)
+    @Column(name = "scoreboard_id", nullable = false, updatable = false)
     private UUID id;
 
     @OneToOne(fetch = FetchType.LAZY)

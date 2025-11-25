@@ -4,12 +4,12 @@ import jakarta.persistence.*;
 import java.util.UUID;
 
 @Entity
-@Table(name = "answer")
+@Table(name = "Answers")
 public class AnswerEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "id", nullable = false, updatable = false)
+    @Column(name = "Answers_id", nullable = false, updatable = false)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)

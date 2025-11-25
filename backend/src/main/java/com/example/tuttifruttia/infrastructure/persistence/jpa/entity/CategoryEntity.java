@@ -4,11 +4,11 @@ import jakarta.persistence.*;
 import java.util.UUID;
 
 @Entity
-@Table(name = "category")
+@Table(name = "Categories")
 public class CategoryEntity {
 
     @Id
-    @Column(name = "id", nullable = false, updatable = false)
+    @Column(name = "categoty_id", nullable = false, updatable = false)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
