@@ -10,7 +10,7 @@ import java.util.List;
 @RequestMapping("/api/game")
 @CrossOrigin(origins = {
         "http://localhost:5173",
-        "https://tutti-fruttia.vercel.app/"
+        "https://tutti-fruttia.vercel.app"
 })
 public class GameController {
 

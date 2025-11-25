@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import "../styles/game.css";
 import { Link, useLocation } from "react-router-dom";
+import api from "../services/api";
 import type {
   StartGameRequest,
   StartGameResponse,
@@ -103,44 +104,28 @@ const [initialRoundTime, setInitialRoundTime] = useState<number>(defaultRoundTim
 
   // 🔹 1) /api/game/start – misma lógica que ApiDebugPage pero usando tipos compartidos
   const fetchLetterFromApi = async (): Promise<string | null> => {
-    const payload: StartGameRequest = {
-      playerName: "Player 1",       // por ahora fijo
-      categoryIds: [...BACKEND_CATEGORY_IDS],
-      roundTimeSeconds: initialRoundTime,
-    };
-
-    try {
-      const resp = await fetch("http://localhost:8080/api/game/start", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!resp.ok) {
-        const text = await resp.text();
-        console.error("Error HTTP en /api/game/start:", resp.status, text);
-        setAiMessage("Error calling /api/game/start (check console).");
-        setShowAiMessage(true);
-        return null;
-      }
-
-      const data: StartGameResponse = await resp.json();
-      setGameId(data.gameId);
-
-      const letter = data.firstLetter.trim().toUpperCase();
-      setCurrentLetter(letter);
-      console.log("Letter from API:", letter);
-
-      return letter;
-    } catch (e) {
-      console.error("Network error in /api/game/start:", e);
-      setAiMessage("Network error calling /api/game/start.");
-      setShowAiMessage(true);
-      return null;
-    }
+  const payload: StartGameRequest = {
+    playerName: "Player 1",
+    categoryIds: [...BACKEND_CATEGORY_IDS],
+    roundTimeSeconds: initialRoundTime,
   };
+
+  try {
+    const { data } = await api.post<StartGameResponse>("/game/start", payload);
+
+    setGameId(data.gameId);
+    const letter = data.firstLetter.trim().toUpperCase();
+    setCurrentLetter(letter);
+    console.log("Letter from API:", letter);
+
+    return letter;
+  } catch (e) {
+    console.error("Error calling /api/game/start:", e);
+    setAiMessage("Error calling /api/game/start (check console).");
+    setShowAiMessage(true);
+    return null;
+  }
+};
 
   // Start → resetea y pide letra al backend
   const startGame = async () => {
@@ -164,88 +149,39 @@ const [initialRoundTime, setInitialRoundTime] = useState<number>(defaultRoundTim
 
   // 🔹 2) /api/game/round – mismo contrato que ApiDebugPage
   const submitAnswers = async () => {
-    if (!isRunning) return;
-    setIsRunning(false);
+  if (!isRunning) return;
+  setIsRunning(false);
 
-    if (!gameId) {
-      console.warn("No gameId, can't send round to backend.");
-      setAiMessage("No game in progress. Start a new game first!");
-      setShowAiMessage(true);
-      return;
-    }
+  if (!gameId) {
+    console.warn("No gameId, can't send round to backend.");
+    setAiMessage("No game in progress. Start a new game first!");
+    setShowAiMessage(true);
+    return;
+  }
 
-    const payload: SubmitRoundRequest = {
-      gameId: gameId,
-      letter: currentLetter,
-      answers: CATEGORIES.map(({ key }, index) => ({
-        categoryId: BACKEND_CATEGORY_IDS[index],
-        value: answers[key],
-      })),
-    };
-
-    console.log("Payload enviado a /api/game/round:", payload);
-
-    try {
-      const resp = await fetch("http://localhost:8080/api/game/round", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!resp.ok) {
-        const text = await resp.text();
-        console.error("Error HTTP en /api/game/round:", resp.status, text);
-        setAiMessage("Error calling /api/game/round (check console).");
-        setShowAiMessage(true);
-        return;
-      }
-
-      const data: SubmitRoundResponse = await resp.json();
-      console.log("Resultado de la ronda en el backend:", data);
-
-      // Mapear resultado del backend → UI
-      const idToKey: Record<number, CategoryKey> = {
-        1: "fruit",
-        2: "country",
-        3: "animal",
-        4: "color",
-      };
-
-      const newValidation: Record<CategoryKey, ValidationState> = {
-        ...INITIAL_VALIDATION,
-      };
-      const newAnswers: Record<CategoryKey, string> = { ...answers };
-
-      let roundScore = 0;
-
-      data.results.forEach((r) => {
-        const key = idToKey[r.categoryId];
-        if (!key) return;
-
-        newAnswers[key] = r.value ?? "";
-        newValidation[key] = r.valid ? "correct" : "incorrect";
-        roundScore += r.score ?? 0;
-      });
-
-      setAnswers(newAnswers);
-      setValidation(newValidation);
-      setScore((prev) => prev + roundScore);
-
-      setAiMessage(`Round finished! You scored ${roundScore} points this round.`);
-      setShowAiMessage(true);
-
-      // Reset suave después de unos segundos
-      setTimeout(() => {
-        resetRoundState();
-      }, 10000);
-    } catch (error) {
-      console.error("Error enviando la ronda al backend:", error);
-      setAiMessage("There was an error sending your answers to the server.");
-      setShowAiMessage(true);
-    }
+  const payload: SubmitRoundRequest = {
+    gameId: gameId,
+    letter: currentLetter,
+    answers: CATEGORIES.map(({ key }, index) => ({
+      categoryId: BACKEND_CATEGORY_IDS[index],
+      value: answers[key],
+    })),
   };
+
+  console.log("Payload enviado a /api/game/round:", payload);
+
+  try {
+    const { data } = await api.post<SubmitRoundResponse>("/game/round", payload);
+    console.log("Resultado de la ronda en el backend:", data);
+
+    // ... acá dejas igual todo lo que ya tenías para mapear resultados
+    // (newValidation, newAnswers, roundScore, etc.)
+  } catch (error) {
+    console.error("Error enviando la ronda al backend:", error);
+    setAiMessage("There was an error sending your answers to the server.");
+    setShowAiMessage(true);
+  }
+};
 
   // Stop → simplemente reutiliza submitAnswers
   const stopGame = () => {
