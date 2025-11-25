@@ -2,7 +2,6 @@ package com.example.tuttifruttia.service;
 
 import com.example.tuttifruttia.controller.dto.*;
 import com.example.tuttifruttia.domain.ai.AIJudge;
-import com.example.tuttifruttia.domain.ai.HybridJudge;
 import com.example.tuttifruttia.domain.core.*;
 import com.example.tuttifruttia.domain.letter.*;
 import com.example.tuttifruttia.domain.scoring.*;

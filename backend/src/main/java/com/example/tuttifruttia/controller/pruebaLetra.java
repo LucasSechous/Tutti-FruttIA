@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Set;
+import java.util.List;
 
 @CrossOrigin(origins = "*")
 @RestController
@@ -17,7 +17,7 @@ public class pruebaLetra {
     @GetMapping("/api")
     public Letter obetenerLetra(){
 
-        Set<Character> lista = Set.of('A', 'B', 'C', 'D');
+        List<Character> lista = List.of('A', 'B', 'C', 'D');
 
         Alphabet alphabet = new Alphabet(lista);
 
