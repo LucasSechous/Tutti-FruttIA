@@ -13,4 +13,12 @@ public interface GameAppService {
     RoundResultDto processRound(SubmitRoundRequestDto request);
 
     GameSummaryDto getGameSummary(String gameId);
+
+    AlphabetDto getAlphabet();
+
+    void updateAlphabet(UpdateAlphabetRequestDto request);
+
+
+
+
 }
