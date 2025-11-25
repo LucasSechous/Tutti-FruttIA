@@ -8,7 +8,6 @@ import java.util.UUID;
 public class CategoryEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
 
@@ -30,10 +29,14 @@ public class CategoryEntity {
         // requerido por JPA
     }
 
-    public CategoryEntity(GameSettingsEntity gameSettings, String name, boolean enabled) {
-        this.gameSettings = gameSettings;
+    public CategoryEntity(UUID id,
+                          String name,
+                          boolean enabled,
+                          GameSettingsEntity gameSettings) {
+        this.id = id;
         this.name = name;
         this.enabled = enabled;
+        this.gameSettings = gameSettings;
     }
 
     // =====================
@@ -41,6 +44,8 @@ public class CategoryEntity {
     // =====================
 
     public UUID getId() { return id; }
+
+    public void setId(UUID id) { this.id = id; }
 
     public GameSettingsEntity getGameSettings() { return gameSettings; }
     public void setGameSettings(GameSettingsEntity gameSettings) { this.gameSettings = gameSettings; }

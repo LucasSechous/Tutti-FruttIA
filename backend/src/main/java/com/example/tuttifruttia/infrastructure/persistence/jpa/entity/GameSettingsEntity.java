@@ -11,7 +11,7 @@ public class GameSettingsEntity {
 
     @Id
     @Column(name = "id", nullable = false, updatable = false)
-    private UUID id;  // 👈 ahora el ID lo controla la app/dominio
+    private UUID id;  // ID manejado por el dominio
 
     @Column(name = "round_seconds", nullable = false)
     private int roundSeconds;
@@ -19,6 +19,11 @@ public class GameSettingsEntity {
     @Embedded
     private PointsRuleEmbeddable pointsRule;
 
+    // === NUEVO: persistimos el alfabeto como un string =====
+    @Column(name = "alphabet_letters", nullable = false, columnDefinition = "text")
+    private String alphabetLetters;
+
+    // Relación inversa con categorías
     @OneToMany(
             mappedBy = "gameSettings",
             cascade = CascadeType.ALL,
@@ -32,10 +37,12 @@ public class GameSettingsEntity {
 
     public GameSettingsEntity(UUID id,
                               int roundSeconds,
-                              PointsRuleEmbeddable pointsRule) {
+                              PointsRuleEmbeddable pointsRule,
+                              String alphabetLetters) {
         this.id = id;
         this.roundSeconds = roundSeconds;
         this.pointsRule = pointsRule;
+        this.alphabetLetters = alphabetLetters;
     }
 
     // === HELPERS ===
@@ -55,7 +62,6 @@ public class GameSettingsEntity {
         return id;
     }
 
-    // opcional, por si querés setearlo después desde un mapper
     public void setId(UUID id) {
         this.id = id;
     }
@@ -74,6 +80,14 @@ public class GameSettingsEntity {
 
     public void setPointsRule(PointsRuleEmbeddable pointsRule) {
         this.pointsRule = pointsRule;
+    }
+
+    public String getAlphabetLetters() {
+        return alphabetLetters;
+    }
+
+    public void setAlphabetLetters(String alphabetLetters) {
+        this.alphabetLetters = alphabetLetters;
     }
 
     public Set<CategoryEntity> getCategories() {
