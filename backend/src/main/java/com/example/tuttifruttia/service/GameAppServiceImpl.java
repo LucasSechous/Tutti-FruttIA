@@ -99,14 +99,8 @@ public StartGameResponseDto startGame(StartGameRequestDto request) {
             getCategoriesFromDto(request.getCategoryIds(), request.getCustomCategories()),
             request.getRoundTimeSeconds(),
             pointsRule,
-            alphabet
+            currentAlphabet
     );
-        GameSettings settings = new GameSettings(
-                getCategoriesFromDto(request.getCategoryIds()),
-                request.getRoundTimeSeconds(),
-                pointsRule,   // 👈 aquí va PointsRule
-                currentAlphabet  // 👈 AHORA usa el alfabeto configurado por el usuario
-        );
 
     SinglePlayerGame game = new SinglePlayerGame(
             settings,
