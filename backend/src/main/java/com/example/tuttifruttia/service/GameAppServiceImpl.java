@@ -204,29 +204,71 @@ public StartGameResponseDto startGame(StartGameRequestDto request) {
 // Helpers
 // ========================================================
 
-    private List<Category> getCategoriesFromDto(List<Long> ids, List<String> customNames) {
+   private List<Category> getCategoriesFromDto(List<Long> ids, List<String> customNames) {
+    // DTOs conocidos (las 4 fijas por ahora)
     Map<Long, CategoryDto> dtoById = getAvailableCategories().stream()
             .collect(Collectors.toMap(CategoryDto::getId, c -> c));
 
     List<Category> result = new ArrayList<>();
 
+    // 1) categorías base seleccionadas por id
     if (ids != null) {
         for (Long id : ids) {
             CategoryDto dto = dtoById.get(id);
             if (dto != null) {
-                result.add(new Category(UUID.randomUUID(), dto.getName(), true));
+                result.add(new Category(
+                        UUID.randomUUID(),   // id interno de dominio
+                        dto.getName(),
+                        true
+                ));
             }
         }
     }
 
+    // 2) categorías custom solo para esta partida
     if (customNames != null) {
         for (String name : customNames) {
             if (name == null || name.isBlank()) continue;
-            result.add(new Category(UUID.randomUUID(), name, true));
+            result.add(new Category(
+                    UUID.randomUUID(),
+                    name,
+                    true
+            ));
         }
     }
 
     return result;
+}
+
+// 🔹 Construye la lista de CategoryDto que verá el front (con ids numéricos)
+private List<CategoryDto> buildSelectedCategoriesDto(List<Long> baseIds, List<String> customNames) {
+    List<CategoryDto> selected = new ArrayList<>();
+
+    // base
+    Map<Long, CategoryDto> dtoById = getAvailableCategories().stream()
+            .collect(Collectors.toMap(CategoryDto::getId, c -> c));
+
+    if (baseIds != null) {
+        for (Long id : baseIds) {
+            CategoryDto dto = dtoById.get(id);
+            if (dto != null) {
+                selected.add(new CategoryDto(dto.getId(), dto.getName(), true));
+            }
+        }
+    }
+
+    // custom: ids "falsos" empezando en 1000
+    if (customNames != null) {
+        long fakeIdBase = 1000L;
+        int i = 0;
+        for (String name : customNames) {
+            if (name == null || name.isBlank()) continue;
+            selected.add(new CategoryDto(fakeIdBase + i, name, true));
+            i++;
+        }
+    }
+
+    return selected;
 }
 
 }
