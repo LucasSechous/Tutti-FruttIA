@@ -60,42 +60,47 @@ public class GameAppServiceImpl implements GameAppService {
     // ========================================================
 
     @Override
-    public StartGameResponseDto startGame(StartGameRequestDto request) {
+public StartGameResponseDto startGame(StartGameRequestDto request) {
 
-        GameSettings settings = new GameSettings(
-                getCategoriesFromDto(request.getCategoryIds()),
-                request.getRoundTimeSeconds(),
-                pointsRule,   // 👈 aquí va PointsRule
-                alphabet      // 👈 aquí va Alphabet (instancia, no el tipo)
-        );
+    GameSettings settings = new GameSettings(
+            // 🔹 ahora pasamos también las custom
+            getCategoriesFromDto(request.getCategoryIds(), request.getCustomCategories()),
+            request.getRoundTimeSeconds(),
+            pointsRule,
+            alphabet
+    );
 
-        SinglePlayerGame game = new SinglePlayerGame(
-                settings,
-                judge,
-                letterStrategy,
-                scorer,
-                persistenceFactory
-        );
+    SinglePlayerGame game = new SinglePlayerGame(
+            settings,
+            judge,
+            letterStrategy,
+            scorer,
+            persistenceFactory
+    );
 
-        game.start(settings);
+    game.start(settings);
 
-        games.put(game.getId(), game);
+    games.put(game.getId(), game);
 
-        Letter firstLetter = game.generateLetter();
+    Letter firstLetter = game.generateLetter();
 
-        StartGameResponseDto response = new StartGameResponseDto();
-        response.setGameId(game.getId().toString());
-        response.setFirstLetter(String.valueOf(firstLetter.getValue())); // char -> String
+    StartGameResponseDto response = new StartGameResponseDto();
+    response.setGameId(game.getId().toString());
+    response.setFirstLetter(String.valueOf(firstLetter.getValue())); // char -> String
 
-        // Usamos las categorías del request para el DTO
-        List<CategoryDto> selectedCategories = getAvailableCategories().stream()
-                .filter(c -> request.getCategoryIds().contains(c.getId()))
-                .toList();
+    // 🔹 armamos las categorías que el front verá (base + custom)
+    List<CategoryDto> selectedCategories = buildSelectedCategoriesDto(
+            request.getCategoryIds(),
+            request.getCustomCategories()
+    );
+    response.setCategories(selectedCategories);
 
-        response.setCategories(selectedCategories);
+    // 🔹 devolvemos también el tiempo configurado
+    response.setRoundTimeSeconds(request.getRoundTimeSeconds());
 
-        return response;
-    }
+    return response;
+}
+
 
     // ========================================================
     // POST /game/round
@@ -199,35 +204,29 @@ public class GameAppServiceImpl implements GameAppService {
 // Helpers
 // ========================================================
 
-    private List<Category> getCategoriesFromDto(List<Long> ids) {
-        // 🔒 Protección por si el front manda null o no manda el campo
-        if (ids == null || ids.isEmpty()) {
-            return List.of(); // lista vacía, sin romper
-        }
+    private List<Category> getCategoriesFromDto(List<Long> ids, List<String> customNames) {
+    Map<Long, CategoryDto> dtoById = getAvailableCategories().stream()
+            .collect(Collectors.toMap(CategoryDto::getId, c -> c));
 
-        // Mapeamos los DTO que ya conocemos (los 4 fijos del getAvailableCategories)
-        Map<Long, CategoryDto> dtoById = getAvailableCategories().stream()
-                .collect(Collectors.toMap(
-                        CategoryDto::getId,
-                        c -> c
-                ));
+    List<Category> result = new ArrayList<>();
 
-        List<Category> result = new ArrayList<>();
-
+    if (ids != null) {
         for (Long id : ids) {
             CategoryDto dto = dtoById.get(id);
             if (dto != null) {
-                // En el dominio usamos un UUID interno y las marcamos como activas
-                Category category = new Category(
-                        UUID.randomUUID(),
-                        dto.getName(),
-                        true
-                );
-                result.add(category);
+                result.add(new Category(UUID.randomUUID(), dto.getName(), true));
             }
         }
-
-        return result;
     }
+
+    if (customNames != null) {
+        for (String name : customNames) {
+            if (name == null || name.isBlank()) continue;
+            result.add(new Category(UUID.randomUUID(), name, true));
+        }
+    }
+
+    return result;
+}
 
 }

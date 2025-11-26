@@ -9,11 +9,22 @@ export interface Category {
   activado: boolean; // tal como viene en la API
 }
 
+/** 🔹 De dónde viene la categoría usada en esta partida */
+export type CategorySource = "base" | "custom";
+
+/** 🔹 Config de categorías que se usan en UNA partida */
+export interface GameCategoryConfig {
+  id?: number;          // solo para las base
+  name: string;
+  source: CategorySource;
+}
+
 /* ============ /api/game/start ============ */
 
 export interface StartGameRequest {
   playerName: string;
-  categoryIds: number[];
+  categoryIds: number[];     // IDs de las categorías base seleccionadas
+  customCategories?: string[]; // Nombres de categorías solo para esta partida
   roundTimeSeconds?: number; // opcional
 }
 
