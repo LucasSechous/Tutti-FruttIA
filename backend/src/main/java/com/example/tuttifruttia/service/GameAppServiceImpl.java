@@ -21,6 +21,8 @@ public class GameAppServiceImpl implements GameAppService {
     private final PersistenceFactory persistenceFactory;
     private final PointsRule pointsRule;
     private final Alphabet alphabet;
+    private Alphabet currentAlphabet;
+
 
     private final Map<UUID, SinglePlayerGame> games = new HashMap<>();
 
@@ -38,7 +40,35 @@ public class GameAppServiceImpl implements GameAppService {
         this.persistenceFactory = persistenceFactory;
         this.pointsRule = pointsRule;
         this.alphabet = alphabet;
+        this.currentAlphabet = alphabet; // inicialmente es el alfabeto completo
     }
+
+
+    // ========================================================
+    // GET /letters
+    // ========================================================
+
+    @Override
+    public AlphabetDto getAlphabet() {
+        return new AlphabetDto(currentAlphabet.getLetters());
+    }
+
+
+    // ========================================================
+    // POST /letters
+    // ========================================================
+
+    @Override
+    public void updateAlphabet(UpdateAlphabetRequestDto request) {
+
+        if (request.getEnabledLetters() == null || request.getEnabledLetters().isEmpty()) {
+            throw new IllegalArgumentException("Debe seleccionar al menos una letra");
+        }
+
+        // Creamos un nuevo alfabeto según las letras habilitadas por el usuario
+        this.currentAlphabet = new Alphabet(request.getEnabledLetters());
+    }
+
 
     // ========================================================
     // GET /categories
@@ -46,6 +76,8 @@ public class GameAppServiceImpl implements GameAppService {
 
     @Override
     public List<CategoryDto> getAvailableCategories() {
+
+
         // TODO: más adelante esto debería venir de dominio/persistencia
         return List.of(
                 new CategoryDto(1L, "Frutas", true),
@@ -66,7 +98,7 @@ public class GameAppServiceImpl implements GameAppService {
                 getCategoriesFromDto(request.getCategoryIds()),
                 request.getRoundTimeSeconds(),
                 pointsRule,   // 👈 aquí va PointsRule
-                alphabet      // 👈 aquí va Alphabet (instancia, no el tipo)
+                currentAlphabet  // 👈 AHORA usa el alfabeto configurado por el usuario
         );
 
         SinglePlayerGame game = new SinglePlayerGame(

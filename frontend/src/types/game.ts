@@ -9,6 +9,18 @@ export interface Category {
   activado: boolean; // tal como viene en la API
 }
 
+/* ============ Letras ============ */
+
+// GET /api/game/letters
+export interface AlphabetResponse {
+  letters: Letter[];
+}
+
+// POST /api/game/letters
+export interface UpdateAlphabetRequest {
+  enabledLetters: Letter[];
+}
+
 /* ============ /api/game/start ============ */
 
 export interface StartGameRequest {
