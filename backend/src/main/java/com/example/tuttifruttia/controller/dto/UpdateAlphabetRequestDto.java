@@ -4,7 +4,6 @@ import java.util.List;
 
 public class UpdateAlphabetRequestDto {
 
-    // lista de letras habilitadas por el usuario
     private List<Character> enabledLetters;
 
     public UpdateAlphabetRequestDto() {}
