@@ -396,27 +396,6 @@ function GamePage() {
           </button>
 
           <button
-            onClick={stopGame}
-            disabled={!isRunning}
-            className="px-6 py-3 rounded-xl font-bold text-white shadow-lg transition-all hover:scale-105 flex items-center gap-2 border-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{
-              backgroundColor: !isRunning ? "#9B5151" : "#F3722C",
-              borderColor: "#E63946",
-            }}
-            onMouseEnter={(e) => {
-              if (isRunning)
-                e.currentTarget.style.backgroundColor = "#E63946";
-            }}
-            onMouseLeave={(e) => {
-              if (isRunning)
-                e.currentTarget.style.backgroundColor = "#F3722C";
-            }}
-          >
-            <span>■</span>
-            Stop
-          </button>
-
-          <button
             onClick={giveUp}
             disabled={!isRunning}
             className="px-6 py-3 rounded-xl font-bold shadow-lg transition-all hover:scale-105 flex items-center gap-2 border-2 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -523,7 +502,7 @@ function GamePage() {
             }}
           >
             <span>✔</span>
-            Submit Answers
+            Tutti Frutti
           </button>
         </div>
 
