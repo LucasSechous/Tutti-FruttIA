@@ -113,9 +113,10 @@ function GamePage() {
     };
 
     try {
-      const { data } = await api.post<StartGameResponse>("/game/start", payload);
-
-      const data: StartGameResponse = await resp.json();
+      const { data } = await api.post<StartGameResponse>(
+        "/game/start",
+        payload
+      );
 
       setGameId(data.gameId);
       const letter = data.firstLetter.trim().toUpperCase();
