@@ -130,18 +130,13 @@ function HomePage() {
       return;
     }
 
-    if (selectedCategories.length === 0) {
-      setError("Debes seleccionar al menos una categoría");
+    if (selectedCategories.length === 0 && customCategories.length === 0) {
+      setError("Selecciona al menos una categoría o agrega un tema");
       return;
     }
 
     if (selectedLetters.length === 0) {
       setError("Debes seleccionar al menos una letra");
-      return;
-    }
-
-    if (selectedCategories.length === 0 && customCategories.length === 0) {
-      setError("Selecciona al menos una categoría o agrega un tema");
       return;
     }
 
@@ -153,25 +148,8 @@ function HomePage() {
     };
 
     navigate("/game", { state: config });
-    try {
-      const response = await gameService.startGame({
-        playerName,
-        categoryIds: selectedCategories,
-        roundTimeSeconds: roundTime,
-      });
-
-      // 👇 Enviamos el roundTime al estado de la partida
-      navigate("/game", {
-        state: {
-          ...response,
-          roundTimeSeconds: roundTime,
-        },
-      });
-    } catch (err) {
-      console.error(err);
-      setError("Error al iniciar la partida");
-    }
   };
+
 
   return (
     <div
