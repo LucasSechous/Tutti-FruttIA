@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import "../styles/game.css";
 import { Link, useLocation } from "react-router-dom";
+import api from "../services/api";
 import type {
   StartGameRequest,
   StartGameResponse,
@@ -112,26 +113,11 @@ function GamePage() {
     };
 
     try {
-      const resp = await fetch("http://localhost:8080/api/game/start", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!resp.ok) {
-        const text = await resp.text();
-        console.error("Error HTTP en /api/game/start:", resp.status, text);
-        setAiMessage("Error calling /api/game/start (check console).");
-        setShowAiMessage(true);
-        return null;
-      }
+      const { data } = await api.post<StartGameResponse>("/game/start", payload);
 
       const data: StartGameResponse = await resp.json();
 
       setGameId(data.gameId);
-
       const letter = data.firstLetter.trim().toUpperCase();
       setCurrentLetter(letter);
 
@@ -149,8 +135,8 @@ function GamePage() {
 
       return letter;
     } catch (e) {
-      console.error("Network error in /api/game/start:", e);
-      setAiMessage("Network error calling /api/game/start.");
+      console.error("Error calling /api/game/start:", e);
+      setAiMessage("Error calling /api/game/start (check console).");
       setShowAiMessage(true);
       return null;
     }
@@ -197,23 +183,10 @@ function GamePage() {
     console.log("Payload enviado a /api/game/round:", payload);
 
     try {
-      const resp = await fetch("http://localhost:8080/api/game/round", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!resp.ok) {
-        const text = await resp.text();
-        console.error("Error HTTP en /api/game/round:", resp.status, text);
-        setAiMessage("Error calling /api/game/round (check console).");
-        setShowAiMessage(true);
-        return;
-      }
-
-      const data: SubmitRoundResponse = await resp.json();
+      const { data } = await api.post<SubmitRoundResponse>(
+        "/game/round",
+        payload
+      );
       console.log("Resultado de la ronda en el backend:", data);
 
       const newValidation = buildEmptyValidation(categories);
@@ -231,7 +204,9 @@ function GamePage() {
       setValidation(newValidation);
       setScore((prev) => prev + roundScore);
 
-      setAiMessage(`Round finished! You scored ${roundScore} points this round.`);
+      setAiMessage(
+        `Round finished! You scored ${roundScore} points this round.`
+      );
       setShowAiMessage(true);
 
       setTimeout(() => {
