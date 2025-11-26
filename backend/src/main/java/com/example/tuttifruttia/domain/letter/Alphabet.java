@@ -1,19 +1,20 @@
 package com.example.tuttifruttia.domain.letter;
 
-import java.util.Set;
+import java.util.List;
+
 
 public class Alphabet {
 
-    private final Set<Character> letters;
+    private final List<Character> letters;
 
-    public Alphabet(Set<Character> letters) {
+    public Alphabet(List<Character> letters) {
         if (letters == null || letters.isEmpty()) {
-            throw new IllegalArgumentException("El Alfabeto no puede estar vacío");
+            throw new IllegalArgumentException("El Alfabeto de letras no puede estar vacío");
         }
-        this.letters = Set.copyOf(letters);
+        this.letters = List.copyOf(letters);
     }
 
-    public Set<Character> getLetters() {
+    public List<Character> getLetters() {
 
         return letters;
     }

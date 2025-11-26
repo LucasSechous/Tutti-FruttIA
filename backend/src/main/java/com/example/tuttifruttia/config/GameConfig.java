@@ -6,7 +6,7 @@ import com.example.tuttifruttia.domain.scoring.PointsRule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.Set;
+import java.util.List;
 
 @Configuration
 public class GameConfig {
@@ -25,10 +25,12 @@ public class GameConfig {
     @Bean
     public Alphabet alphabet() {
         // Alfabeto básico A–Z. Ajustalo si querés incluir Ñ u otras letras.
-        return new Alphabet(Set.of(
+        return new Alphabet(List.of(
                 'A','B','C','D','E','F','G','H','I','J',
                 'K','L','M','N','O','P','Q','R','S','T',
                 'U','V','W','X','Y','Z'
         ));
     }
+
+
 }

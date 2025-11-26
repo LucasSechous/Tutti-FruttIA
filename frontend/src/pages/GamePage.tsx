@@ -7,39 +7,23 @@ import type {
   StartGameResponse,
   SubmitRoundRequest,
   SubmitRoundResponse,
+  Category,
 } from "../types/game";
 
-const CATEGORIES = [
-  { key: "fruit", label: "Fruit" },     // id 1 → Frutas
-  { key: "country", label: "Country" }, // id 2 → Países
-  { key: "animal", label: "Animal" },   // id 3 → Animales
-  { key: "color", label: "Color" },     // id 4 → Colores
-] as const;
-
-type CategoryKey = (typeof CATEGORIES)[number]["key"];
 type ValidationState = "correct" | "incorrect" | null;
 
-const INITIAL_ANSWERS: Record<CategoryKey, string> = {
-  fruit: "",
-  country: "",
-  animal: "",
-  color: "",
-};
-
-const INITIAL_VALIDATION: Record<CategoryKey, ValidationState> = {
-  fruit: null,
-  country: null,
-  animal: null,
-  color: null,
-};
-
-// IDs de categorías del backend, en el mismo orden que CATEGORIES
-const BACKEND_CATEGORY_IDS = [1, 2, 3, 4] as const;
+interface GameConfigFromHome {
+  playerName: string;
+  categoryIds: number[];
+  customCategories: string[];
+  roundTimeSeconds: number;
+}
 
 function GamePage() {
   const location = useLocation();
-  const gameStateFromNav = location.state as StartGameResponse | undefined;
-  const defaultRoundTime = gameStateFromNav?.roundTimeSeconds ?? 60;
+  const configFromHome = location.state as GameConfigFromHome | undefined;
+
+  const defaultRoundTime = configFromHome?.roundTimeSeconds ?? 60;
 
   const [currentLetter, setCurrentLetter] = useState<string>("?");
   const [score, setScore] = useState<number>(0);
@@ -47,29 +31,38 @@ function GamePage() {
   const [initialRoundTime, setInitialRoundTime] =
     useState<number>(defaultRoundTime);
   const [isRunning, setIsRunning] = useState<boolean>(false);
-  const [answers, setAnswers] =
-    useState<Record<CategoryKey, string>>(INITIAL_ANSWERS);
-  const [validation, setValidation] =
-    useState<Record<CategoryKey, ValidationState>>(INITIAL_VALIDATION);
+
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [validation, setValidation] = useState<
+    Record<number, ValidationState>
+  >({});
+
   const [aiMessage, setAiMessage] = useState<string>(
     "Ready to play? Click Start when you're ready!"
   );
   const [showAiMessage, setShowAiMessage] = useState<boolean>(true);
 
-  // gameId que devuelve el backend en /api/game/start
   const [gameId, setGameId] = useState<string | null>(null);
 
-  // Si llegamos desde HomePage con datos de navegación
-  useEffect(() => {
-    if (gameStateFromNav) {
-      setGameId(gameStateFromNav.gameId);
-      setCurrentLetter(gameStateFromNav.firstLetter.trim().toUpperCase());
+  // helpers para limpiar respuestas/validaciones según categorías actuales
+  const buildEmptyAnswers = (cats: Category[]): Record<number, string> => {
+    const obj: Record<number, string> = {};
+    cats.forEach((c) => {
+      obj[c.id] = "";
+    });
+    return obj;
+  };
 
-      const roundTimeFromNav = gameStateFromNav.roundTimeSeconds || 60;
-      setInitialRoundTime(roundTimeFromNav);
-      setTimer(roundTimeFromNav);
-    }
-  }, [gameStateFromNav]);
+  const buildEmptyValidation = (
+    cats: Category[]
+  ): Record<number, ValidationState> => {
+    const obj: Record<number, ValidationState> = {};
+    cats.forEach((c) => {
+      obj[c.id] = null;
+    });
+    return obj;
+  };
 
   // efecto del timer
   useEffect(() => {
@@ -89,36 +82,56 @@ function GamePage() {
     }
   }, [timer, isRunning]);
 
-  const handleChange = (key: CategoryKey, value: string) => {
-    setAnswers((prev) => ({ ...prev, [key]: value }));
+  const handleChange = (categoryId: number, value: string) => {
+    setAnswers((prev) => ({ ...prev, [categoryId]: value }));
   };
 
   const resetRoundState = () => {
-    setAnswers(INITIAL_ANSWERS);
-    setValidation(INITIAL_VALIDATION);
+    setAnswers(buildEmptyAnswers(categories));
+    setValidation(buildEmptyValidation(categories));
     setTimer(initialRoundTime);
     setCurrentLetter("?");
     setIsRunning(false);
     setAiMessage("Ready to play? Click Start when you're ready!");
     setShowAiMessage(true);
-    // NO reseteamos score aquí para mantener el total de la partida
+    // no reseteamos el score para mantener el total en el front
   };
 
-  // 1) /api/game/start – pedimos letra al backend usando axios
+  // 🔹 Llamada a /api/game/start usando la config del Home
   const fetchLetterFromApi = async (): Promise<string | null> => {
+    if (!configFromHome) {
+      setAiMessage("No game configuration found. Go back to the home page.");
+      setShowAiMessage(true);
+      return null;
+    }
+
     const payload: StartGameRequest = {
-      playerName: "Player 1", // por ahora fijo
-      categoryIds: [...BACKEND_CATEGORY_IDS],
-      roundTimeSeconds: initialRoundTime,
+      playerName: configFromHome.playerName,
+      categoryIds: configFromHome.categoryIds,
+      customCategories: configFromHome.customCategories,
+      roundTimeSeconds: configFromHome.roundTimeSeconds,
     };
 
     try {
       const { data } = await api.post<StartGameResponse>("/game/start", payload);
 
+      const data: StartGameResponse = await resp.json();
+
       setGameId(data.gameId);
       const letter = data.firstLetter.trim().toUpperCase();
       setCurrentLetter(letter);
-      console.log("Letter from API:", letter);
+
+      const cats = data.categories ?? [];
+      setCategories(cats);
+      setAnswers(buildEmptyAnswers(cats));
+      setValidation(buildEmptyValidation(cats));
+
+      const rt =
+        data.roundTimeSeconds ?? configFromHome.roundTimeSeconds ?? 60;
+      setInitialRoundTime(rt);
+      setTimer(rt);
+
+      console.log("Letter from API:", letter, "categories:", cats);
 
       return letter;
     } catch (e) {
@@ -133,9 +146,6 @@ function GamePage() {
   const startGame = async () => {
     if (isRunning) return;
 
-    setAnswers(INITIAL_ANSWERS);
-    setValidation(INITIAL_VALIDATION);
-    setTimer(initialRoundTime);
     setIsRunning(true);
     setShowAiMessage(true);
     setAiMessage("Getting a letter from the server...");
@@ -149,7 +159,7 @@ function GamePage() {
     setAiMessage(`Quick! Find words starting with ${letter}!`);
   };
 
-  // 2) /api/game/round – enviar respuestas de la ronda
+  // 🔹 /api/game/round
   const submitAnswers = async () => {
     if (!isRunning) return;
     setIsRunning(false);
@@ -164,9 +174,9 @@ function GamePage() {
     const payload: SubmitRoundRequest = {
       gameId: gameId,
       letter: currentLetter,
-      answers: CATEGORIES.map(({ key }, index) => ({
-        categoryId: BACKEND_CATEGORY_IDS[index],
-        value: answers[key],
+      answers: categories.map((cat) => ({
+        categoryId: cat.id,
+        value: answers[cat.id] ?? "",
       })),
     };
 
@@ -179,27 +189,14 @@ function GamePage() {
       );
       console.log("Resultado de la ronda en el backend:", data);
 
-      // Mapear resultado del backend → UI
-      const idToKey: Record<number, CategoryKey> = {
-        1: "fruit",
-        2: "country",
-        3: "animal",
-        4: "color",
-      };
-
-      const newValidation: Record<CategoryKey, ValidationState> = {
-        ...INITIAL_VALIDATION,
-      };
-      const newAnswers: Record<CategoryKey, string> = { ...answers };
+      const newValidation = buildEmptyValidation(categories);
+      const newAnswers: Record<number, string> = { ...answers };
 
       let roundScore = 0;
 
       data.results.forEach((r) => {
-        const key = idToKey[r.categoryId];
-        if (!key) return;
-
-        newAnswers[key] = r.value ?? "";
-        newValidation[key] = r.valid ? "correct" : "incorrect";
+        newAnswers[r.categoryId] = r.value ?? "";
+        newValidation[r.categoryId] = r.valid ? "correct" : "incorrect";
         roundScore += r.score ?? 0;
       });
 
@@ -212,7 +209,6 @@ function GamePage() {
       );
       setShowAiMessage(true);
 
-      // Reset suave después de unos segundos
       setTimeout(() => {
         resetRoundState();
       }, 10000);
@@ -223,7 +219,6 @@ function GamePage() {
     }
   };
 
-  // Stop → simplemente reutiliza submitAnswers
   const stopGame = () => {
     if (!isRunning) return;
     submitAnswers();
@@ -376,27 +371,6 @@ function GamePage() {
           </button>
 
           <button
-            onClick={stopGame}
-            disabled={!isRunning}
-            className="px-6 py-3 rounded-xl font-bold text-white shadow-lg transition-all hover:scale-105 flex items-center gap-2 border-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{
-              backgroundColor: !isRunning ? "#9B5151" : "#F3722C",
-              borderColor: "#E63946",
-            }}
-            onMouseEnter={(e) => {
-              if (isRunning)
-                e.currentTarget.style.backgroundColor = "#E63946";
-            }}
-            onMouseLeave={(e) => {
-              if (isRunning)
-                e.currentTarget.style.backgroundColor = "#F3722C";
-            }}
-          >
-            <span>■</span>
-            Stop
-          </button>
-
-          <button
             onClick={giveUp}
             disabled={!isRunning}
             className="px-6 py-3 rounded-xl font-bold shadow-lg transition-all hover:scale-105 flex items-center gap-2 border-2 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -433,17 +407,17 @@ function GamePage() {
             className="text-2xl font-bold mb-6 text-center"
             style={{ color: "#2D1E1E" }}
           >
-            Categories
+            Categorías
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            {CATEGORIES.map(({ key, label }) => (
-              <div key={key} className="flex flex-col">
+            {categories.map((cat) => (
+              <div key={cat.id} className="flex flex-col">
                 <label
                   className="font-bold mb-2 text-lg"
                   style={{ color: "#2D1E1E" }}
                 >
-                  {label}
+                  {cat.name}
                 </label>
                 <div className="flex items-center gap-2">
                   <input
@@ -454,10 +428,10 @@ function GamePage() {
                       color: "#2D1E1E",
                       borderColor: "#F3722C",
                     }}
-                    value={answers[key]}
-                    onChange={(e) => handleChange(key, e.target.value)}
+                    value={answers[cat.id] ?? ""}
+                    onChange={(e) => handleChange(cat.id, e.target.value)}
                     disabled={!isRunning}
-                    placeholder={`Enter a ${label.toLowerCase()}...`}
+                    placeholder={`Ingresa una ${cat.name.toLowerCase()}...`}
                     onFocus={(e) =>
                       (e.target.style.borderColor = "#E63946")
                     }
@@ -466,17 +440,17 @@ function GamePage() {
                     }
                   />
 
-                  {validation[key] && (
+                  {validation[cat.id] && (
                     <div
                       className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-lg text-xl"
                       style={{
                         backgroundColor:
-                          validation[key] === "correct"
+                          validation[cat.id] === "correct"
                             ? "#E63946"
                             : "#C1121F",
                       }}
                     >
-                      {validation[key] === "correct" ? "✓" : "✗"}
+                      {validation[cat.id] === "correct" ? "✓" : "✗"}
                     </div>
                   )}
                 </div>
@@ -503,7 +477,7 @@ function GamePage() {
             }}
           >
             <span>✔</span>
-            Submit Answers
+            Tutti Frutti
           </button>
         </div>
 

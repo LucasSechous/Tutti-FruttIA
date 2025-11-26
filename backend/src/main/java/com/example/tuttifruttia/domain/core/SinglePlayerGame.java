@@ -1,7 +1,6 @@
 package com.example.tuttifruttia.domain.core;
 
 import com.example.tuttifruttia.domain.ai.AIJudge;
-import com.example.tuttifruttia.domain.ai.HybridJudge;
 import com.example.tuttifruttia.domain.letter.LetterStrategy;
 import com.example.tuttifruttia.domain.persistence.PersistenceFactory;
 import com.example.tuttifruttia.domain.persistence.ValidationLogRepository;

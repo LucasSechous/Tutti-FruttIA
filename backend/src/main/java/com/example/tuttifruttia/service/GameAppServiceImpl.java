@@ -2,7 +2,6 @@ package com.example.tuttifruttia.service;
 
 import com.example.tuttifruttia.controller.dto.*;
 import com.example.tuttifruttia.domain.ai.AIJudge;
-import com.example.tuttifruttia.domain.ai.HybridJudge;
 import com.example.tuttifruttia.domain.core.*;
 import com.example.tuttifruttia.domain.letter.*;
 import com.example.tuttifruttia.domain.scoring.*;
@@ -22,6 +21,8 @@ public class GameAppServiceImpl implements GameAppService {
     private final PersistenceFactory persistenceFactory;
     private final PointsRule pointsRule;
     private final Alphabet alphabet;
+    private Alphabet currentAlphabet;
+
 
     private final Map<UUID, SinglePlayerGame> games = new HashMap<>();
 
@@ -39,7 +40,35 @@ public class GameAppServiceImpl implements GameAppService {
         this.persistenceFactory = persistenceFactory;
         this.pointsRule = pointsRule;
         this.alphabet = alphabet;
+        this.currentAlphabet = alphabet; // inicialmente es el alfabeto completo
     }
+
+
+    // ========================================================
+    // GET /letters
+    // ========================================================
+
+    @Override
+    public AlphabetDto getAlphabet() {
+        return new AlphabetDto(currentAlphabet.getLetters());
+    }
+
+
+    // ========================================================
+    // POST /letters
+    // ========================================================
+
+    @Override
+    public void updateAlphabet(UpdateAlphabetRequestDto request) {
+
+        if (request.getEnabledLetters() == null || request.getEnabledLetters().isEmpty()) {
+            throw new IllegalArgumentException("Debe seleccionar al menos una letra");
+        }
+
+        // Creamos un nuevo alfabeto según las letras habilitadas por el usuario
+        this.currentAlphabet = new Alphabet(request.getEnabledLetters());
+    }
+
 
     // ========================================================
     // GET /categories
@@ -47,6 +76,8 @@ public class GameAppServiceImpl implements GameAppService {
 
     @Override
     public List<CategoryDto> getAvailableCategories() {
+
+
         // TODO: más adelante esto debería venir de dominio/persistencia
         return List.of(
                 new CategoryDto(1L, "Frutas", true),
@@ -61,42 +92,47 @@ public class GameAppServiceImpl implements GameAppService {
     // ========================================================
 
     @Override
-    public StartGameResponseDto startGame(StartGameRequestDto request) {
+public StartGameResponseDto startGame(StartGameRequestDto request) {
 
-        GameSettings settings = new GameSettings(
-                getCategoriesFromDto(request.getCategoryIds()),
-                request.getRoundTimeSeconds(),
-                pointsRule,   // 👈 aquí va PointsRule
-                alphabet      // 👈 aquí va Alphabet (instancia, no el tipo)
-        );
+    GameSettings settings = new GameSettings(
+            // 🔹 ahora pasamos también las custom
+            getCategoriesFromDto(request.getCategoryIds(), request.getCustomCategories()),
+            request.getRoundTimeSeconds(),
+            pointsRule,
+            currentAlphabet
+    );
 
-        SinglePlayerGame game = new SinglePlayerGame(
-                settings,
-                judge,
-                letterStrategy,
-                scorer,
-                persistenceFactory
-        );
+    SinglePlayerGame game = new SinglePlayerGame(
+            settings,
+            judge,
+            letterStrategy,
+            scorer,
+            persistenceFactory
+    );
 
-        game.start(settings);
+    game.start(settings);
 
-        games.put(game.getId(), game);
+    games.put(game.getId(), game);
 
-        Letter firstLetter = game.generateLetter();
+    Letter firstLetter = game.generateLetter();
 
-        StartGameResponseDto response = new StartGameResponseDto();
-        response.setGameId(game.getId().toString());
-        response.setFirstLetter(String.valueOf(firstLetter.getValue())); // char -> String
+    StartGameResponseDto response = new StartGameResponseDto();
+    response.setGameId(game.getId().toString());
+    response.setFirstLetter(String.valueOf(firstLetter.getValue())); // char -> String
 
-        // Usamos las categorías del request para el DTO
-        List<CategoryDto> selectedCategories = getAvailableCategories().stream()
-                .filter(c -> request.getCategoryIds().contains(c.getId()))
-                .toList();
+    // 🔹 armamos las categorías que el front verá (base + custom)
+    List<CategoryDto> selectedCategories = buildSelectedCategoriesDto(
+            request.getCategoryIds(),
+            request.getCustomCategories()
+    );
+    response.setCategories(selectedCategories);
 
-        response.setCategories(selectedCategories);
+    // 🔹 devolvemos también el tiempo configurado
+    response.setRoundTimeSeconds(request.getRoundTimeSeconds());
 
-        return response;
-    }
+    return response;
+}
+
 
     // ========================================================
     // POST /game/round
@@ -200,35 +236,71 @@ public class GameAppServiceImpl implements GameAppService {
 // Helpers
 // ========================================================
 
-    private List<Category> getCategoriesFromDto(List<Long> ids) {
-        // 🔒 Protección por si el front manda null o no manda el campo
-        if (ids == null || ids.isEmpty()) {
-            return List.of(); // lista vacía, sin romper
-        }
+   private List<Category> getCategoriesFromDto(List<Long> ids, List<String> customNames) {
+    // DTOs conocidos (las 4 fijas por ahora)
+    Map<Long, CategoryDto> dtoById = getAvailableCategories().stream()
+            .collect(Collectors.toMap(CategoryDto::getId, c -> c));
 
-        // Mapeamos los DTO que ya conocemos (los 4 fijos del getAvailableCategories)
-        Map<Long, CategoryDto> dtoById = getAvailableCategories().stream()
-                .collect(Collectors.toMap(
-                        CategoryDto::getId,
-                        c -> c
-                ));
+    List<Category> result = new ArrayList<>();
 
-        List<Category> result = new ArrayList<>();
-
+    // 1) categorías base seleccionadas por id
+    if (ids != null) {
         for (Long id : ids) {
             CategoryDto dto = dtoById.get(id);
             if (dto != null) {
-                // En el dominio usamos un UUID interno y las marcamos como activas
-                Category category = new Category(
-                        UUID.randomUUID(),
+                result.add(new Category(
+                        UUID.randomUUID(),   // id interno de dominio
                         dto.getName(),
                         true
-                );
-                result.add(category);
+                ));
             }
         }
-
-        return result;
     }
+
+    // 2) categorías custom solo para esta partida
+    if (customNames != null) {
+        for (String name : customNames) {
+            if (name == null || name.isBlank()) continue;
+            result.add(new Category(
+                    UUID.randomUUID(),
+                    name,
+                    true
+            ));
+        }
+    }
+
+    return result;
+}
+
+// 🔹 Construye la lista de CategoryDto que verá el front (con ids numéricos)
+private List<CategoryDto> buildSelectedCategoriesDto(List<Long> baseIds, List<String> customNames) {
+    List<CategoryDto> selected = new ArrayList<>();
+
+    // base
+    Map<Long, CategoryDto> dtoById = getAvailableCategories().stream()
+            .collect(Collectors.toMap(CategoryDto::getId, c -> c));
+
+    if (baseIds != null) {
+        for (Long id : baseIds) {
+            CategoryDto dto = dtoById.get(id);
+            if (dto != null) {
+                selected.add(new CategoryDto(dto.getId(), dto.getName(), true));
+            }
+        }
+    }
+
+    // custom: ids "falsos" empezando en 1000
+    if (customNames != null) {
+        long fakeIdBase = 1000L;
+        int i = 0;
+        for (String name : customNames) {
+            if (name == null || name.isBlank()) continue;
+            selected.add(new CategoryDto(fakeIdBase + i, name, true));
+            i++;
+        }
+    }
+
+    return selected;
+}
 
 }

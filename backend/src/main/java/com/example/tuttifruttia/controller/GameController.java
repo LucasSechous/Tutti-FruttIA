@@ -20,6 +20,17 @@ public class GameController {
         this.gameAppService = gameAppService;
     }
 
+    @GetMapping("/letters")
+    public AlphabetDto getAlphabet() {
+        return gameAppService.getAlphabet();
+    }
+
+    @PostMapping("/letters")
+    public void updateAlphabet(@RequestBody UpdateAlphabetRequestDto request) {
+        gameAppService.updateAlphabet(request);
+    }
+
+
     // 1) Obtener categorías
     @GetMapping("/categories")
     public List<CategoryDto> getCategories() {

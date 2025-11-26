@@ -13,7 +13,7 @@ public class SemanticJudge implements AIJudge{
     private static final String SYSTEM_PROMPT = """
     Sos un árbitro estricto de un juego de Tutti Frutti (Stop, Basta).
     Reglas del juego:
-    - El jugador debe escribir UNA sola palabra por respuesta.
+    - El jugador debe escribir UNA sola palabra por respuesta, exeptuando si es una palabra compuesta.
     - La palabra debe comenzar EXACTAMENTE con la letra indicada (sin contar tildes ni espacios).
     - La palabra debe pertenecer claramente a la categoría indicada (por ejemplo: País, Animal, Fruta, Color, etc.).
     - La palabra debe ser un término real en español o nombre propio válido (no inventado).
