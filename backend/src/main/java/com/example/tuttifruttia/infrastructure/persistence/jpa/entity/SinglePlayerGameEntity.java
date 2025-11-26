@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "singlePlayerGames")
+@Table(name = "single_player_game") // 👈 tabla en Supabase
 public class SinglePlayerGameEntity {
 
     @Id
@@ -15,13 +15,17 @@ public class SinglePlayerGameEntity {
     private UUID id; // ID lo controla el dominio
 
     @Column(name = "state", nullable = false, length = 30)
-    private String state; // podés mapear tu enum GameState como String
+    private String state; // Podés mapear tu enum GameState como String
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "settings_id", nullable = false)
     private GameSettingsEntity settings;
 
-    @OneToMany(mappedBy = "rounds", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(
+            mappedBy = "game",           // 👈 tiene que coincidir con el campo "game" en RoundEntity
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
     private List<RoundEntity> rounds = new ArrayList<>();
 
     @Column(name = "started_at", nullable = false)
@@ -30,12 +34,12 @@ public class SinglePlayerGameEntity {
     @Column(name = "ended_at")
     private OffsetDateTime endedAt;
 
-    @OneToOne(mappedBy = "scoreboard", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(
+            mappedBy = "game",           // 👈 coincide con el campo "game" en ScoreBoardEntity
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
     private ScoreBoardEntity scoreboard;
-
-    // =========================
-    //  CONSTRUCTORES
-    // =========================
 
     protected SinglePlayerGameEntity() {
         // requerido por JPA
@@ -69,8 +73,7 @@ public class SinglePlayerGameEntity {
         return id;
     }
 
-    // lo usa el adapter para sincronizar ID dominio ↔ BD
-    public void setId(UUID id) {
+    public void setId(UUID id) { // lo usa el adapter para sincronizar ID dominio ↔ BD
         this.id = id;
     }
 

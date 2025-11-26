@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "Scoreboards")
+@Table(name = "scoreboard")  // 👈 nombre de la tabla en Supabase
 public class ScoreBoardEntity {
 
     @Id
@@ -16,7 +16,7 @@ public class ScoreBoardEntity {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "game_id", nullable = false, unique = true)
-    private SinglePlayerGameEntity game;
+    private SinglePlayerGameEntity game;   // 👈 coincide con mappedBy = "game" en SinglePlayerGameEntity
 
     @OneToMany(
             mappedBy = "scoreboard",

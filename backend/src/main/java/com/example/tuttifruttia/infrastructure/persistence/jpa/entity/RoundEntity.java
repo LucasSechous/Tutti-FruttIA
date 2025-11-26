@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "Rounds")
+@Table(name = "rounds")  // 👈 nombre de la tabla en Supabase
 public class RoundEntity {
 
     @Id
@@ -17,7 +17,7 @@ public class RoundEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "game_id", nullable = false)
-    private SinglePlayerGameEntity game;
+    private SinglePlayerGameEntity game;   // 👈 esto es lo que referencia mappedBy = "game" arriba
 
     @Column(name = "letter", nullable = false, length = 1)
     private String letter;
