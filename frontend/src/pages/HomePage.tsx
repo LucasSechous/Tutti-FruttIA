@@ -2,7 +2,7 @@ import "./HomePage.css";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { gameService } from "../services/gameService";
-import type { Category } from "../types/game";
+import type { Category, Letter } from "../types/game";
 import { Settings, X } from "lucide-react";
 
 interface GameConfigFromHome {
@@ -12,6 +12,12 @@ interface GameConfigFromHome {
   roundTimeSeconds: number;
 }
 
+const ALL_LETTERS: Letter[] = [
+  "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K",
+  "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U",
+  "V", "W", "X", "Y", "Z",
+];
+
 function HomePage() {
   const navigate = useNavigate();
 
@@ -20,21 +26,38 @@ function HomePage() {
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
   const [customCategories, setCustomCategories] = useState<string[]>([]);
   const [newCustomCategory, setNewCustomCategory] = useState("");
+
+  const [selectedLetters, setSelectedLetters] = useState<Letter[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showConfig, setShowConfig] = useState(false);
   const [roundTime, setRoundTime] = useState(60);
 
-  // Cargar categorías del backend al entrar
+  // Cargar categorías y letras del backend al entrar
   useEffect(() => {
     const load = async () => {
       try {
-        const cats = await gameService.getCategories();
+        const [cats, alphabet] = await Promise.all([
+          gameService.getCategories(),
+          gameService.getLetters(),
+        ]);
+
         setCategories(cats);
         setSelectedCategories(cats.map((c) => c.id)); // todas seleccionadas por defecto
+        setSelectedCategories(cats.map((c) => c.id)); // todas seleccionadas por defecto
+
+        // Letras habilitadas desde el backend; si viniera vacío, usamos todas
+        const backendLetters = alphabet.letters ?? [];
+        setSelectedLetters(
+          backendLetters.length > 0 ? backendLetters : ALL_LETTERS
+        );
       } catch (err) {
         console.error(err);
         setError("No se pudieron cargar las categorías");
+        console.error(err);
+        setError("No se pudieron cargar las categorías o letras");
+        // fallback: habilitamos todas las letras
+        setSelectedLetters(ALL_LETTERS);
       } finally {
         setLoading(false);
       }
@@ -46,6 +69,28 @@ function HomePage() {
     setSelectedCategories((prev) =>
       prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
     );
+  };
+
+  const toggleLetter = (letter: Letter) => {
+    setSelectedLetters((prev) =>
+      prev.includes(letter)
+        ? prev.filter((l) => l !== letter)
+        : [...prev, letter]
+    );
+  };
+
+  // Guardar configuración (solo letras por ahora) y cerrar modal
+  const saveConfig = async () => {
+    setError("");
+    try {
+      await gameService.updateLetters({
+        enabledLetters: selectedLetters,
+      });
+      setShowConfig(false);
+    } catch (err) {
+      console.error(err);
+      setError("No se pudo guardar la configuración de letras");
+    }
   };
 
   // 🔹 Añadir categoría solo para esta partida
@@ -85,6 +130,16 @@ function HomePage() {
       return;
     }
 
+    if (selectedCategories.length === 0) {
+      setError("Debes seleccionar al menos una categoría");
+      return;
+    }
+
+    if (selectedLetters.length === 0) {
+      setError("Debes seleccionar al menos una letra");
+      return;
+    }
+
     if (selectedCategories.length === 0 && customCategories.length === 0) {
       setError("Selecciona al menos una categoría o agrega un tema");
       return;
@@ -98,6 +153,24 @@ function HomePage() {
     };
 
     navigate("/game", { state: config });
+    try {
+      const response = await gameService.startGame({
+        playerName,
+        categoryIds: selectedCategories,
+        roundTimeSeconds: roundTime,
+      });
+
+      // 👇 Enviamos el roundTime al estado de la partida
+      navigate("/game", {
+        state: {
+          ...response,
+          roundTimeSeconds: roundTime,
+        },
+      });
+    } catch (err) {
+      console.error(err);
+      setError("Error al iniciar la partida");
+    }
   };
 
   return (
@@ -283,6 +356,57 @@ function HomePage() {
               </div>
             </div>
 
+            {/* Letras disponibles */}
+            <div className="mb-6">
+              <div className="flex justify-between items-center mb-2">
+                <h3
+                  className="text-xl font-bold"
+                  style={{ color: "#2D1E1E" }}
+                >
+                  Letras disponibles{" "}
+                  <span style={{ color: "#E63946" }}>
+                    ({selectedLetters.length})
+                  </span>
+                </h3>
+                <button
+                  type="button"
+                  className="text-sm font-semibold underline"
+                  style={{ color: "#E63946" }}
+                  onClick={() => setSelectedLetters(ALL_LETTERS)}
+                >
+                  Seleccionar todas
+                </button>
+              </div>
+              <p
+                className="text-sm mb-3"
+                style={{ color: "#9B5151" }}
+              >
+                Toca una letra para activarla o desactivarla.
+              </p>
+              <div className="flex flex-wrap gap-3 justify-center">
+                {ALL_LETTERS.map((letter) => {
+                  const isEnabled = selectedLetters.includes(letter);
+                  return (
+                    <button
+                      key={letter}
+                      type="button"
+                      onClick={() => toggleLetter(letter)}
+                      className="w-10 h-10 rounded-full font-bold text-lg flex items-center justify-center transition-all border-2 shadow-sm"
+                      style={{
+                        backgroundColor: isEnabled ? "#FFFFFF" : "#9B5151",
+                        color: isEnabled ? "#2D1E1E" : "#FAD4D8",
+                        borderColor: isEnabled ? "#E63946" : "transparent",
+                        opacity: isEnabled ? 1 : 0.6,
+                      }}
+                    >
+                      {letter}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Categorías disponibles */}
             {/* Categorías base */}
             <div>
               <h3
@@ -425,9 +549,9 @@ function HomePage() {
               </div>
             </div>
 
-            {/* Botón cerrar */}
+            {/* Botón guardar */}
             <button
-              onClick={() => setShowConfig(false)}
+              onClick={saveConfig}
               className="w-full mt-6 text-white font-bold py-4 rounded-xl transition-all shadow-md"
               style={{ backgroundColor: "#F3722C" }}
               onMouseEnter={(e) =>

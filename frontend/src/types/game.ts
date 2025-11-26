@@ -19,6 +19,18 @@ export interface GameCategoryConfig {
   source: CategorySource;
 }
 
+/* ============ Letras ============ */
+
+// GET /api/game/letters
+export interface AlphabetResponse {
+  letters: Letter[];
+}
+
+// POST /api/game/letters
+export interface UpdateAlphabetRequest {
+  enabledLetters: Letter[];
+}
+
 /* ============ /api/game/start ============ */
 
 export interface StartGameRequest {
