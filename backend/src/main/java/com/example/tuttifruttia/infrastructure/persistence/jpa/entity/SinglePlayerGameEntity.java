@@ -21,7 +21,7 @@ public class SinglePlayerGameEntity {
     @JoinColumn(name = "settings_id", nullable = false)
     private GameSettingsEntity settings;
 
-    @OneToMany(mappedBy = "rounds", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "game", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RoundEntity> rounds = new ArrayList<>();
 
     @Column(name = "started_at", nullable = false)
@@ -30,7 +30,7 @@ public class SinglePlayerGameEntity {
     @Column(name = "ended_at")
     private OffsetDateTime endedAt;
 
-    @OneToOne(mappedBy = "scoreboard", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(mappedBy = "game", cascade = CascadeType.ALL, orphanRemoval = true)
     private ScoreBoardEntity scoreboard;
 
     // =========================

@@ -40,8 +40,9 @@ public class GameSettingsEntity {
                               PointsRuleEmbeddable pointsRule,
                               String alphabetLetters) {
         this.id = id;
-        this.roundSeconds = roundSeconds;
-        this.pointsRule = pointsRule;
+
+
+        ointsRule;
         this.alphabetLetters = alphabetLetters;
     }
 

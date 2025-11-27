@@ -8,7 +8,7 @@ import java.util.UUID;
 public class CategoryEntity {
 
     @Id
-    @Column(name = "categoty_id", nullable = false, updatable = false)
+    @Column(name = "category_id", nullable = false, updatable = false)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
