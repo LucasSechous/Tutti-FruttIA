@@ -1,5 +1,8 @@
 package com.example.tuttifruttia.domain.core;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class Round {
@@ -10,9 +13,14 @@ public class Round {
     private AnswerSet answers;
     private RoundStatus status;
 
+    // Mapa de resultados de validación por categoría
+    private Map<Category, ValidationResult> validationResults;
+
     public Round() {
         this.id = UUID.randomUUID();
         this.status = RoundStatus.WAITING_LETTER;
+        this.answers = new AnswerSet();
+        this.validationResults = new HashMap<>();
     }
 
     public void start(Letter letter, int seconds) {
@@ -25,6 +33,7 @@ public class Round {
         this.letter = letter;
         this.timer = new CountdownTimer(seconds);
         this.answers = new AnswerSet();
+        this.validationResults = new HashMap<>();
         this.timer.start();
         this.status = RoundStatus.ANSWERING;
     }
@@ -32,7 +41,6 @@ public class Round {
     public void setAnswers(AnswerSet answers) {
         this.answers = answers;
     }
-
 
     public void finish() {
         if (status != RoundStatus.ANSWERING) {
@@ -66,5 +74,19 @@ public class Round {
 
     public RoundStatus getStatus() {
         return status;
+    }
+
+    // --- NUEVO: gestión de resultados de validación ---
+
+    public void setValidationResults(Map<Category, ValidationResult> validationResults) {
+        if (validationResults == null) {
+            this.validationResults = new HashMap<>();
+        } else {
+            this.validationResults = new HashMap<>(validationResults);
+        }
+    }
+
+    public Map<Category, ValidationResult> getValidationResults() {
+        return Collections.unmodifiableMap(validationResults);
     }
 }

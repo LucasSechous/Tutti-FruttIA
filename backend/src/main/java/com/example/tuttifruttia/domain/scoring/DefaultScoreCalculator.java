@@ -1,9 +1,10 @@
 package com.example.tuttifruttia.domain.scoring;
 
 import com.example.tuttifruttia.domain.core.*;
-
+import org.springframework.stereotype.Component;
 import java.util.Map;
 
+@Component
 public class DefaultScoreCalculator implements ScoreCalculator{
 
     @Override
